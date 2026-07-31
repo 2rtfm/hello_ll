@@ -1,0 +1,6 @@
+Documentation:
+  CommentFormat: Doxygen
+Hover:
+  ShowAKA: false
+Completion:
+  MacroFilter: FuzzyMatch

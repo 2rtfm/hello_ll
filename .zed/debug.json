@@ -1,0 +1,32 @@
+// Project-local debug tasks
+//
+// For more documentation on how to configure debug tasks,
+// see: https://zed.dev/docs/debugger
+[
+  {
+    "label": "GDB connect pyOCD",
+    "adapter": "GDB",
+    // "tcp_connection": {
+    //   "port": 3333
+    // },
+    "request": "launch",
+    "program": "build/LLVM_Debug/hello_ll.elf",
+    "gdb_path": "D:/Scoop/apps/gdb/current/bin/gdb.exe",
+  },
+  {
+    // "pyocd gdbserver -t stm32f103c6"
+    "label": "CodeLLDB connect pyOCD",
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "initCommands": [
+      // "settings set target.default-arch armv7m-none-eabi"
+    ],
+    "targetCreateCommands": [
+      "target create $ZED_WORKTREE_ROOT/build/LLVM_Debug/hello_ll.elf"
+    ],
+    "processCreateCommands": [
+      "gdb-remote localhost:3333",
+      // "target modules load --file $ZED_WORKTREE_ROOT/build/name.elf -s 0x00000000" // flash firmware
+    ]
+  }
+]
