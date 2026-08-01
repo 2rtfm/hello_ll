@@ -22,14 +22,13 @@
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
-#include "stm32f1xx_ll_gpio.h"
-#include "stm32f1xx_ll_utils.h"
+#include "stm32f1xx.h"
 #include "usart.h"
 #include "usb.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "keyled.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -105,9 +104,10 @@ int main(void) {
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1) {
+    if (ScanKey()) {
+      LED_Toggle();
+    }
     /* USER CODE END WHILE */
-    LL_mDelay(200);
-    LL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 
     /* USER CODE BEGIN 3 */
   }
