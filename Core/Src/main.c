@@ -22,7 +22,6 @@
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
-#include "stm32f1xx.h"
 #include "usart.h"
 #include "usb.h"
 
@@ -104,9 +103,6 @@ int main(void) {
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1) {
-    if (ScanKey()) {
-      LED_Toggle();
-    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

@@ -10,5 +10,7 @@
 #define LED_OFF() LL_GPIO_ResetOutputPin(LED_GPIO_Port, LED_Pin)
 #endif
 
+#ifdef KEY_UP_Pin
 int ScanKey(void);
+#endif
 #endif
