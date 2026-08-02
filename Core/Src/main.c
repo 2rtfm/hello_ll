@@ -22,7 +22,10 @@
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
+#include "stm32f103x6.h"
 #include "stm32f1xx.h"
+#include "stm32f1xx_ll_usart.h"
+#include "uart.h"
 #include "usart.h"
 #include "usb.h"
 
@@ -106,6 +109,11 @@ int main(void) {
   while (1) {
     if (ScanKey()) {
       LED_Toggle();
+      if (LED_GetState()) {
+        UART_SendString("Off\n");
+      } else {
+        UART_SendString("On\n");
+      }
     }
     /* USER CODE END WHILE */
 
