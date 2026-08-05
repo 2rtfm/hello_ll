@@ -32,6 +32,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "keyled.h"
+#include <stdint.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -70,6 +71,7 @@ void SystemClock_Config(void);
  * @brief  The application entry point.
  * @retval int
  */
+uint8_t recv_data[2];
 int main(void) {
 
   /* USER CODE BEGIN 1 */
@@ -106,13 +108,14 @@ int main(void) {
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  UART_RecvData_IT(recv_data, 2);
   while (1) {
     if (ScanKey()) {
       LED_Toggle();
       if (LED_GetState()) {
-        UART_SendString("Off\n");
+        UART_SendData_IT((uint8_t *)"Off\n", 4);
       } else {
-        UART_SendString("On\n");
+        UART_SendData_IT((uint8_t *)"On\n", 3);
       }
     }
     /* USER CODE END WHILE */
@@ -121,7 +124,11 @@ int main(void) {
   }
   /* USER CODE END 3 */
 }
-
+void UART_Handle_Recv(void) {
+  LED_Toggle();
+  UART_SendData_IT(recv_data, 2);
+  UART_RecvData_IT(recv_data, 2);
+};
 /**
  * @brief System Clock Configuration
  * @retval None
