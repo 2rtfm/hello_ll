@@ -16,8 +16,9 @@ static uint8_t rx_buf_storage[RX_BUF_SIZE];
 static ring_buffer_t rx_buf = {
     .storage = rx_buf_storage, .size = RX_BUF_SIZE, .head = 0, .tail = 0};
 
-static uint8_t *tx_it_data, tx_it_left;
-static uint8_t *rx_it_data, rx_it_left;
+// static uint8_t *tx_it_data, tx_it_left;
+// static uint8_t *rx_it_data, rx_it_left;
+static uint8_t tx_it_left, rx_it_left;
 
 void UART_SendByte(uint8_t data) {
   while (!LL_USART_IsActiveFlag_TXE(TARGET_UART))
@@ -46,23 +47,32 @@ void UART_SendBin(uint8_t bin) {
 }
 
 void UART_SendData_IT(uint8_t *data, uint8_t size) {
-  tx_it_data = data;
-  tx_it_left = size;
+  tx_it_left += size;
+  do {
+    ring_buffer_push(&tx_buf, *data++);
+  } while (--size);
   LL_USART_EnableIT_TXE(TARGET_UART);
 }
 
 __WEAK void UART_Handle_Recv(void) {}
 
-void UART_RecvData_IT(uint8_t *data, uint8_t size) {
-  rx_it_data = data;
-  rx_it_left = size;
+void UART_RecvData_IT(uint8_t size) {
+  rx_it_left += size;
   LL_USART_EnableIT_RXNE(TARGET_UART);
+}
+
+void UART_Transmit_RecvData_IT(uint8_t *data, uint8_t size) {
+  do {
+    ring_buffer_pop(&rx_buf, data++);
+  } while (--size);
 }
 
 void UART_Handle_IT(void) {
   if (LL_USART_IsActiveFlag_TXE(TARGET_UART)) {
     if (tx_it_left > 0) {
-      LL_USART_TransmitData8(TARGET_UART, *tx_it_data++);
+      uint8_t data;
+      ring_buffer_pop(&tx_buf, &data);
+      LL_USART_TransmitData8(TARGET_UART, data);
       if (--tx_it_left == 0) {
         LL_USART_DisableIT_TXE(TARGET_UART);
       }
@@ -72,7 +82,7 @@ void UART_Handle_IT(void) {
   }
   if (LL_USART_IsActiveFlag_RXNE(TARGET_UART)) {
     if (rx_it_left > 0) {
-      *rx_it_data++ = LL_USART_ReceiveData8(TARGET_UART);
+      ring_buffer_push(&rx_buf, LL_USART_ReceiveData8(TARGET_UART));
       if (--rx_it_left == 0) {
         LL_USART_DisableIT_RXNE(TARGET_UART);
         UART_Handle_Recv();

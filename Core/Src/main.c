@@ -108,7 +108,7 @@ int main(void) {
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  UART_RecvData_IT(recv_data, 2);
+  UART_RecvData_IT(2);
   while (1) {
     if (ScanKey()) {
       LED_Toggle();
@@ -126,8 +126,9 @@ int main(void) {
 }
 void UART_Handle_Recv(void) {
   LED_Toggle();
+  UART_Transmit_RecvData_IT(recv_data, 2);
   UART_SendData_IT(recv_data, 2);
-  UART_RecvData_IT(recv_data, 2);
+  UART_RecvData_IT(2);
 };
 /**
  * @brief System Clock Configuration

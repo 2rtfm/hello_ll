@@ -18,7 +18,8 @@ void UART_SendBin(uint8_t bin);
 
 __WEAK void UART_Handle_Recv(void);
 void UART_SendData_IT(uint8_t *data, uint8_t size);
-void UART_RecvData_IT(uint8_t *data, uint8_t size);
+void UART_RecvData_IT(uint8_t size);
+void UART_Transmit_RecvData_IT(uint8_t *data, uint8_t size);
 void UART_Handle_IT(void);
 
 #endif
