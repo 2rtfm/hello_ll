@@ -26,10 +26,15 @@ void UART_SendByte(uint8_t data) {
   LL_USART_TransmitData8(TARGET_UART, data);
 }
 
+void UART_SendData(const uint8_t *data, uint8_t size) {
+  do {
+    UART_SendByte(*data++);
+  } while (--size);
+}
+
 void UART_SendString(const char *str) {
   while (*str != '\0') {
-    UART_SendByte(*str);
-    str++;
+    UART_SendByte(*str++);
   }
 }
 
@@ -46,12 +51,39 @@ void UART_SendBin(uint8_t bin) {
   } while (--i);
 }
 
-void UART_SendData_IT(uint8_t *data, uint8_t size) {
-  tx_it_left += size;
+void UART_SendByte_IT(uint8_t data) {
+  ring_buffer_push(&tx_buf, data);
+  tx_it_left++;
+  LL_USART_EnableIT_TXE(TARGET_UART);
+}
+
+void UART_SendData_IT(const uint8_t *data, uint8_t size) {
   do {
     ring_buffer_push(&tx_buf, *data++);
+    tx_it_left++;
   } while (--size);
   LL_USART_EnableIT_TXE(TARGET_UART);
+}
+
+void UART_SendString_IT(const char *str) {
+  while (*str != '\0') {
+    ring_buffer_push(&tx_buf, *str++);
+    tx_it_left++;
+  }
+  LL_USART_EnableIT_TXE(TARGET_UART);
+}
+
+void UART_SendHex_IT(uint8_t hex) {
+  UART_SendByte_IT(hexTable[hex >> 0x4]);
+  UART_SendByte_IT(hexTable[hex & 0xF]);
+}
+
+void UART_SendBin_IT(uint8_t bin) {
+  uint8_t i = 8;
+  do {
+    UART_SendByte_IT(bin & 0x80 ? '1' : '0');
+    bin <<= 1;
+  } while (--i);
 }
 
 __WEAK void UART_Handle_Recv(void) {}

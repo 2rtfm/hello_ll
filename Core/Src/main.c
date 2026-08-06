@@ -114,6 +114,10 @@ int main(void) {
       LED_Toggle();
       if (LED_GetState()) {
         UART_SendData_IT((uint8_t *)"Off\n", 4);
+        UART_SendString_IT("233");
+        UART_SendByte_IT('\n');
+        UART_SendHex_IT(0xAB);
+        UART_SendBin_IT(0b10101011);
       } else {
         UART_SendData_IT((uint8_t *)"On\n", 3);
       }
