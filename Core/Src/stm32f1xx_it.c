@@ -18,11 +18,11 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
-#include "uart.h"
 #include "stm32f1xx_it.h"
+#include "main.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -198,6 +198,30 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32f1xx.s).                    */
 /******************************************************************************/
+
+/**
+ * @brief This function handles DMA1 channel4 global interrupt.
+ */
+void DMA1_Channel4_IRQHandler(void) {
+  /* USER CODE BEGIN DMA1_Channel4_IRQn 0 */
+  UART_Handle_DMA_TX();
+  /* USER CODE END DMA1_Channel4_IRQn 0 */
+  /* USER CODE BEGIN DMA1_Channel4_IRQn 1 */
+
+  /* USER CODE END DMA1_Channel4_IRQn 1 */
+}
+
+/**
+ * @brief This function handles DMA1 channel5 global interrupt.
+ */
+void DMA1_Channel5_IRQHandler(void) {
+  /* USER CODE BEGIN DMA1_Channel5_IRQn 0 */
+  UART_Handle_DMA_RX();
+  /* USER CODE END DMA1_Channel5_IRQn 0 */
+  /* USER CODE BEGIN DMA1_Channel5_IRQn 1 */
+
+  /* USER CODE END DMA1_Channel5_IRQn 1 */
+}
 
 /**
   * @brief This function handles USART1 global interrupt.

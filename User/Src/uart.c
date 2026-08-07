@@ -1,5 +1,7 @@
 #include "uart.h"
 #include "ring_buffer.h"
+#include "stm32f103x6.h"
+#include "stm32f1xx_ll_dma.h"
 #include "stm32f1xx_ll_usart.h"
 #include <stdint.h>
 
@@ -100,7 +102,8 @@ void UART_Transmit_RecvData_IT(uint8_t *data, uint8_t size) {
 }
 
 void UART_Handle_IT(void) {
-  if (LL_USART_IsActiveFlag_TXE(TARGET_UART)) {
+  if (LL_USART_IsActiveFlag_TXE(TARGET_UART) &&
+      LL_USART_IsEnabledIT_TXE(TARGET_UART)) {
     if (tx_it_left > 0) {
       uint8_t data;
       ring_buffer_pop(&tx_buf, &data);
@@ -112,7 +115,8 @@ void UART_Handle_IT(void) {
       LL_USART_DisableIT_TXE(TARGET_UART);
     }
   }
-  if (LL_USART_IsActiveFlag_RXNE(TARGET_UART)) {
+  if (LL_USART_IsActiveFlag_RXNE(TARGET_UART) &&
+      LL_USART_IsEnabledIT_RXNE(TARGET_UART)) {
     if (rx_it_left > 0) {
       ring_buffer_push(&rx_buf, LL_USART_ReceiveData8(TARGET_UART));
       if (--rx_it_left == 0) {
@@ -122,5 +126,44 @@ void UART_Handle_IT(void) {
     } else {
       LL_USART_DisableIT_RXNE(TARGET_UART);
     }
+  }
+}
+
+void UART_SendData_DMA(const uint8_t *data, uint8_t size) {
+  LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_4,
+                          LL_USART_DMA_GetRegAddr(USART1));
+  LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_4, (uint32_t)data);
+  LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_4, size);
+  LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_4);
+  LL_USART_EnableDMAReq_TX(USART1);
+  LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_4);
+}
+
+void UART_Handle_DMA_TX(void) {
+  if (LL_DMA_IsActiveFlag_TC4(DMA1)) {
+    LL_DMA_ClearFlag_TC4(DMA1);
+    LL_USART_DisableDMAReq_TX(USART1);
+    LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_4);
+    LL_DMA_DisableIT_TC(DMA1, LL_DMA_CHANNEL_4);
+  }
+}
+
+void UART_RecvData_DMA(uint8_t *data, uint8_t size) {
+  LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_5,
+                          LL_USART_DMA_GetRegAddr(USART1));
+  LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_5, (uint32_t)data);
+  LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_5, size);
+  LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_5);
+  LL_USART_EnableDMAReq_RX(USART1);
+  LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_5);
+}
+
+void UART_Handle_DMA_RX(void) {
+  if (LL_DMA_IsActiveFlag_TC5(DMA1)) {
+    LL_DMA_ClearFlag_TC5(DMA1);
+    LL_USART_DisableDMAReq_RX(USART1);
+    LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_5);
+    LL_DMA_DisableIT_TC(DMA1, LL_DMA_CHANNEL_5);
+    UART_Handle_Recv();
   }
 }

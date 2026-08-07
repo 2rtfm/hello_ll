@@ -27,4 +27,9 @@ void UART_RecvData_IT(uint8_t size);
 void UART_Transmit_RecvData_IT(uint8_t *data, uint8_t size);
 void UART_Handle_IT(void);
 
+void UART_SendData_DMA(const uint8_t *data, uint8_t size);
+void UART_Handle_DMA_TX(void);
+void UART_RecvData_DMA(uint8_t *data, uint8_t size);
+void UART_Handle_DMA_RX(void);
+
 #endif

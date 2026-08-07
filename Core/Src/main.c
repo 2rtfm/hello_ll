@@ -18,20 +18,18 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "gpio.h"
+#include "dma.h"
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
-#include "stm32f103x6.h"
-#include "stm32f1xx.h"
-#include "stm32f1xx_ll_usart.h"
-#include "uart.h"
 #include "usart.h"
 #include "usb.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "gpio.h"
 #include "keyled.h"
+#include "uart.h"
 #include <stdint.h>
 /* USER CODE END Includes */
 
@@ -53,25 +51,28 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t recv_data[2];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+void UART_Handle_Recv(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+void UART_Handle_Recv(void) {
+  LED_Toggle();
+  UART_SendData_DMA(recv_data, 2);
+  UART_RecvData_DMA(recv_data, 2);
+};
 /* USER CODE END 0 */
 
 /**
  * @brief  The application entry point.
  * @retval int
  */
-uint8_t recv_data[2];
 int main(void) {
 
   /* USER CODE BEGIN 1 */
@@ -97,6 +98,7 @@ int main(void) {
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_I2C1_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
@@ -108,18 +110,14 @@ int main(void) {
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  UART_RecvData_IT(2);
+  UART_RecvData_DMA(recv_data, 2);
   while (1) {
     if (ScanKey()) {
       LED_Toggle();
       if (LED_GetState()) {
-        UART_SendData_IT((uint8_t *)"Off\n", 4);
-        UART_SendString_IT("233");
-        UART_SendByte_IT('\n');
-        UART_SendHex_IT(0xAB);
-        UART_SendBin_IT(0b10101011);
+        UART_SendData_DMA((uint8_t *)"Off\n", 4);
       } else {
-        UART_SendData_IT((uint8_t *)"On\n", 3);
+        UART_SendData_DMA((uint8_t *)"On\n", 3);
       }
     }
     /* USER CODE END WHILE */
@@ -128,12 +126,7 @@ int main(void) {
   }
   /* USER CODE END 3 */
 }
-void UART_Handle_Recv(void) {
-  LED_Toggle();
-  UART_Transmit_RecvData_IT(recv_data, 2);
-  UART_SendData_IT(recv_data, 2);
-  UART_RecvData_IT(2);
-};
+
 /**
  * @brief System Clock Configuration
  * @retval None
