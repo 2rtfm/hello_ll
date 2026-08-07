@@ -32,4 +32,7 @@ void UART_Handle_DMA_TX(void);
 void UART_RecvData_DMA(uint8_t *data, uint8_t size);
 void UART_Handle_DMA_RX(void);
 
+__WEAK void UART_Handle_Recv_IDLE(uint8_t size);
+void UART_RecvData_IDLE(uint8_t *data, uint8_t max_size);
+
 #endif

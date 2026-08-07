@@ -21,6 +21,7 @@ static ring_buffer_t rx_buf = {
 // static uint8_t *tx_it_data, tx_it_left;
 // static uint8_t *rx_it_data, rx_it_left;
 static uint8_t tx_it_left, rx_it_left;
+static uint8_t rx_idle_max_size;
 
 void UART_SendByte(uint8_t data) {
   while (!LL_USART_IsActiveFlag_TXE(TARGET_UART))
@@ -127,6 +128,14 @@ void UART_Handle_IT(void) {
       LL_USART_DisableIT_RXNE(TARGET_UART);
     }
   }
+  if (LL_USART_IsActiveFlag_IDLE(TARGET_UART) &&
+      LL_USART_IsEnabledIT_IDLE(TARGET_UART)) {
+    LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_5);
+    uint16_t remain = LL_DMA_GetDataLength(DMA1, LL_DMA_CHANNEL_5);
+    uint16_t size = rx_idle_max_size - remain;
+    LL_USART_ClearFlag_IDLE(USART1);
+    UART_Handle_Recv_IDLE(size);
+  }
 }
 
 void UART_SendData_DMA(const uint8_t *data, uint8_t size) {
@@ -166,4 +175,18 @@ void UART_Handle_DMA_RX(void) {
     LL_DMA_DisableIT_TC(DMA1, LL_DMA_CHANNEL_5);
     UART_Handle_Recv();
   }
+}
+
+__WEAK void UART_Handle_Recv_IDLE(uint8_t size) {}
+
+void UART_RecvData_IDLE(uint8_t *data, uint8_t max_size) {
+  rx_idle_max_size = max_size;
+  LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_5,
+                          LL_USART_DMA_GetRegAddr(USART1));
+  LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_5, (uint32_t)data);
+  LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_5, max_size);
+  LL_USART_EnableDMAReq_RX(USART1);
+  LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_5);
+  LL_USART_ClearFlag_IDLE(TARGET_UART);
+  LL_USART_EnableIT_IDLE(TARGET_UART);
 }

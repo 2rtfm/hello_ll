@@ -51,7 +51,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint8_t recv_data[2];
+uint8_t recv_data[50];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -67,6 +67,12 @@ void UART_Handle_Recv(void) {
   UART_SendData_DMA(recv_data, 2);
   UART_RecvData_DMA(recv_data, 2);
 };
+
+void UART_Handle_Recv_IDLE(uint8_t size) {
+  LED_Toggle();
+  UART_SendData_DMA(recv_data, size);
+  UART_RecvData_IDLE(recv_data, 50);
+}
 /* USER CODE END 0 */
 
 /**
@@ -110,7 +116,8 @@ int main(void) {
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  UART_RecvData_DMA(recv_data, 2);
+  // UART_RecvData_DMA(recv_data, 2);
+  UART_RecvData_IDLE(recv_data, 50);
   while (1) {
     if (ScanKey()) {
       LED_Toggle();
