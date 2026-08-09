@@ -204,7 +204,7 @@ void SysTick_Handler(void)
  */
 void DMA1_Channel4_IRQHandler(void) {
   /* USER CODE BEGIN DMA1_Channel4_IRQn 0 */
-  UART_Handle_DMA_TX();
+  UART_Handle_DMA_TX(UART1);
   /* USER CODE END DMA1_Channel4_IRQn 0 */
   /* USER CODE BEGIN DMA1_Channel4_IRQn 1 */
 
@@ -216,7 +216,7 @@ void DMA1_Channel4_IRQHandler(void) {
  */
 void DMA1_Channel5_IRQHandler(void) {
   /* USER CODE BEGIN DMA1_Channel5_IRQn 0 */
-  UART_Handle_DMA_RX();
+  UART_Handle_DMA_RX(UART1);
   /* USER CODE END DMA1_Channel5_IRQn 0 */
   /* USER CODE BEGIN DMA1_Channel5_IRQn 1 */
 
@@ -229,7 +229,7 @@ void DMA1_Channel5_IRQHandler(void) {
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-  UART_Handle_IT();
+  UART_Handle_IT(UART1);
   /* USER CODE END USART1_IRQn 0 */
   /* USER CODE BEGIN USART1_IRQn 1 */
 

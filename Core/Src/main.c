@@ -22,6 +22,7 @@
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
+#include "stm32f1xx_ll_dma.h"
 #include "usart.h"
 #include "usb.h"
 
@@ -57,21 +58,22 @@ uint8_t recv_data[50];
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void UART_Handle_Recv(void);
+void UART_Handle_Recv(UART_Ctx *ctx);
+void UART_Handle_Recv_IDLE(UART_Ctx *ctx, uint8_t size);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void UART_Handle_Recv(void) {
+void UART_Handle_Recv(UART_Ctx *ctx) {
   LED_Toggle();
-  UART_SendData_DMA(recv_data, 2);
-  UART_RecvData_DMA(recv_data, 2);
+  UART_SendData_DMA(ctx, recv_data, 2);
+  UART_RecvData_DMA(ctx, recv_data, 2);
 };
 
-void UART_Handle_Recv_IDLE(uint8_t size) {
+void UART_Handle_Recv_IDLE(UART_Ctx *ctx, uint8_t size) {
   LED_Toggle();
-  UART_SendData_DMA(recv_data, size);
-  UART_RecvData_IDLE(recv_data, 50);
+  UART_SendData_DMA(ctx, recv_data, size);
+  UART_RecvData_IDLE(ctx, recv_data, 50);
 }
 /* USER CODE END 0 */
 
@@ -117,14 +119,14 @@ int main(void) {
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   // UART_RecvData_DMA(recv_data, 2);
-  UART_RecvData_IDLE(recv_data, 50);
+  UART_RecvData_IDLE(UART1, recv_data, 50);
   while (1) {
     if (ScanKey()) {
       LED_Toggle();
       if (LED_GetState()) {
-        UART_SendData_DMA((uint8_t *)"Off\n", 4);
+        UART_SendData_DMA(UART1, (uint8_t *)"Off\n", 4);
       } else {
-        UART_SendData_DMA((uint8_t *)"On\n", 3);
+        UART_SendData_DMA(UART1, (uint8_t *)"On\n", 3);
       }
     }
     /* USER CODE END WHILE */
