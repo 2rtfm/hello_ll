@@ -19,16 +19,15 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
+#include "gpio.h"
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
-#include "stm32f1xx_ll_dma.h"
 #include "usart.h"
 #include "usb.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "gpio.h"
 #include "keyled.h"
 #include "uart.h"
 #include <stdint.h>
@@ -112,6 +111,7 @@ int main(void) {
   MX_USART1_UART_Init();
   MX_USB_PCD_Init();
   MX_RTC_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -120,13 +120,16 @@ int main(void) {
   /* USER CODE BEGIN WHILE */
   // UART_RecvData_DMA(recv_data, 2);
   UART_RecvData_IDLE(UART1, recv_data, 50);
+  UART_RecvData_IDLE(UART2, recv_data, 50);
   while (1) {
     if (ScanKey()) {
       LED_Toggle();
       if (LED_GetState()) {
         UART_SendData_DMA(UART1, (uint8_t *)"Off\n", 4);
+        UART_SendData_DMA(UART2, (uint8_t *)"Off\n", 4);
       } else {
         UART_SendData_DMA(UART1, (uint8_t *)"On\n", 3);
+        UART_SendData_DMA(UART2, (uint8_t *)"On\n", 3);
       }
     }
     /* USER CODE END WHILE */
