@@ -1,4 +1,5 @@
 #include "uart.h"
+#include "ring_buffer.h"
 #include "stm32f103x6.h"
 #include "stm32f1xx_ll_dma.h"
 #include "stm32f1xx_ll_usart.h"
@@ -77,6 +78,10 @@ __WEAK void UART_Handle_Recv(UART_Ctx *ctx) {}
 void UART_RecvData_IT(UART_Ctx *ctx, uint8_t size) {
   ctx->rx_it_left += size;
   LL_USART_EnableIT_RXNE(ctx->uart);
+}
+
+uint8_t UART_Sizeof_RecvData_IT(UART_Ctx *ctx) {
+  return ring_buffer_get_count(ctx->rx_buf);
 }
 
 void UART_Transmit_RecvData_IT(UART_Ctx *ctx, uint8_t *data, uint8_t size) {
