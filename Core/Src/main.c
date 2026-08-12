@@ -23,14 +23,18 @@
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
+#include "stm32f1xx_ll_i2c.h"
 #include "usart.h"
 #include "usb.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "aht20.h"
 #include "keyled.h"
 #include "uart.h"
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,6 +56,10 @@
 
 /* USER CODE BEGIN PV */
 uint8_t recv_data[50];
+char hum[7];
+char temp[7];
+char msg[50];
+uint8_t read_flag;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -71,6 +79,9 @@ void UART_Handle_Recv(UART_Ctx *ctx) {
 
 void UART_Handle_Recv_IDLE(UART_Ctx *ctx, uint8_t size) {
   LED_Toggle();
+  if (recv_data[0] == 'r') {
+    read_flag = 1;
+  }
   UART_SendData_DMA(ctx, recv_data, size);
   UART_RecvData_IDLE(ctx, recv_data, 50);
 }
@@ -113,7 +124,7 @@ int main(void) {
   MX_RTC_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  aht20_init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -131,6 +142,18 @@ int main(void) {
         UART_SendData_DMA(UART1, (uint8_t *)"On\n", 3);
         UART_SendData_DMA(UART2, (uint8_t *)"On\n", 3);
       }
+    }
+    if (read_flag) {
+      read_flag = 0;
+      aht20_read(temp, hum);
+      strcpy(msg, "\nTemp: ");
+      strcat(msg, temp);
+      strcat(msg, "°C\nHum:  ");
+      strcat(msg, hum);
+      strcat(msg, " %\n");
+      UART_SendData_DMA(UART1, (uint8_t *)msg, strlen(msg));
+      UART_SendData_DMA(UART2, (uint8_t *)msg, strlen(msg));
+      LL_mDelay(20);
     }
     /* USER CODE END WHILE */
 
