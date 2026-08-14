@@ -21,9 +21,12 @@
 #include "dma.h"
 #include "gpio.h"
 #include "i2c.h"
+#include "i2c_hw.h"
+#include "i2c_ll.h"
 #include "rtc.h"
 #include "spi.h"
-#include "stm32f1xx_ll_i2c.h"
+#include "stm32f1xx_ll_utils.h"
+#include "uart_hw.h"
 #include "usart.h"
 #include "usb.h"
 
@@ -33,7 +36,6 @@
 #include "keyled.h"
 #include "uart.h"
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 /* USER CODE END Includes */
 
@@ -60,6 +62,7 @@ char hum[7];
 char temp[7];
 char msg[50];
 uint8_t read_flag;
+AHT20_Status aht20_status;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -71,11 +74,21 @@ void UART_Handle_Recv_IDLE(UART_Ctx *ctx, uint8_t size);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void UART_Handle_Recv(UART_Ctx *ctx) {
+void UART_Handle_Recv_IT(UART_Ctx *ctx) {
+  LED_Toggle();
+  UART_Transmit_RecvData_IT(ctx, recv_data, 1);
+  if (recv_data[0] == 'r') {
+    read_flag = 1;
+  }
+  UART_SendData_IT(ctx, recv_data, 1);
+  UART_RecvData_IT(ctx, 1);
+};
+
+void UART_Handle_Recv_DMA(UART_Ctx *ctx) {
   LED_Toggle();
   UART_SendData_DMA(ctx, recv_data, 2);
   UART_RecvData_DMA(ctx, recv_data, 2);
-};
+}
 
 void UART_Handle_Recv_IDLE(UART_Ctx *ctx, uint8_t size) {
   LED_Toggle();
@@ -84,6 +97,41 @@ void UART_Handle_Recv_IDLE(UART_Ctx *ctx, uint8_t size) {
   }
   UART_SendData_DMA(ctx, recv_data, size);
   UART_RecvData_IDLE(ctx, recv_data, 50);
+}
+
+void I2C_LL_Error_Callback(I2C_Ctx *ctx, I2C_LL_Error error) {
+  if (error.I2C_LL_ERROR_BERR) {
+    /* 总线错误复位后重新初始化 */
+    MX_I2C1_Init();
+    strcpy(msg, "Error: BERR\n");
+  }
+  if (error.I2C_LL_ERROR_AF) {
+    strcpy(msg, "Error: AF\n");
+  }
+  if (error.I2C_LL_ERROR_ARLO) {
+    strcpy(msg, "Error: ARLO\n");
+  }
+  if (error.I2C_LL_ERROR_OVR) {
+    strcpy(msg, "Error: OVR\n");
+  }
+  UART_SendData_DMA(UART1, (uint8_t *)msg, strlen(msg));
+  ctx->status = I2C_LL_STATUS_IDLE;
+}
+
+void I2C_LL_MasterTx_Callback(I2C_Ctx *ctx) {
+  if (ctx->addr == AHT20_ADDR) {
+    if (aht20_status == AHT20_STATUS_SENDING_MESURE) {
+      aht20_status = AHT20_STATUS_SENDING_COMPLETE;
+    }
+  }
+}
+
+void I2C_LL_MasterRx_Callback(I2C_Ctx *ctx) {
+  if (ctx->addr == AHT20_ADDR) {
+    if (aht20_status == AHT20_STATUS_READING_MESURE) {
+      aht20_status = AHT20_STATUS_READING_COMPLETE;
+    }
+  }
 }
 /* USER CODE END 0 */
 
@@ -124,35 +172,48 @@ int main(void) {
   MX_RTC_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  aht20_init();
+  AHT20_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   // UART_RecvData_DMA(recv_data, 2);
   UART_RecvData_IDLE(UART1, recv_data, 50);
-  UART_RecvData_IDLE(UART2, recv_data, 50);
+  UART_RecvData_IT(UART2, 1);
+  // UART_RecvData_IDLE(UART2, recv_data, 50);
   while (1) {
-    if (ScanKey()) {
-      LED_Toggle();
-      if (LED_GetState()) {
-        UART_SendData_DMA(UART1, (uint8_t *)"Off\n", 4);
-        UART_SendData_DMA(UART2, (uint8_t *)"Off\n", 4);
-      } else {
-        UART_SendData_DMA(UART1, (uint8_t *)"On\n", 3);
-        UART_SendData_DMA(UART2, (uint8_t *)"On\n", 3);
-      }
-    }
+    // if (ScanKey()) {
+    //   LED_Toggle();
+    //   if (LED_GetState()) {
+    //     UART_SendData_DMA(UART1, (uint8_t *)"Off\n", 4);
+    //     UART_SendData_IT(UART2, (uint8_t *)"Off\n", 4);
+    //   } else {
+    //     UART_SendData_DMA(UART1, (uint8_t *)"On\n", 3);
+    //     UART_SendData_IT(UART2, (uint8_t *)"On\n", 3);
+    //   }
+    // }
     if (read_flag) {
       read_flag = 0;
-      aht20_read(temp, hum);
+      if (aht20_status == AHT20_STATUS_IDLE) {
+        AHT20_Measure_IT();
+        aht20_status = AHT20_STATUS_SENDING_MESURE;
+      }
+    }
+    if (aht20_status == AHT20_STATUS_SENDING_COMPLETE) {
+      LL_mDelay(80);
+      AHT20_Recv_IT();
+      aht20_status = AHT20_STATUS_READING_MESURE;
+    }
+    if (aht20_status == AHT20_STATUS_READING_COMPLETE) {
+      AHT20_Format_IT(temp, hum);
+      aht20_status = AHT20_STATUS_IDLE;
       strcpy(msg, "\nTemp: ");
       strcat(msg, temp);
       strcat(msg, "°C\nHum:  ");
       strcat(msg, hum);
       strcat(msg, " %\n");
       UART_SendData_DMA(UART1, (uint8_t *)msg, strlen(msg));
-      UART_SendData_DMA(UART2, (uint8_t *)msg, strlen(msg));
+      UART_SendData_IT(UART2, (uint8_t *)msg, strlen(msg));
       LL_mDelay(20);
     }
     /* USER CODE END WHILE */

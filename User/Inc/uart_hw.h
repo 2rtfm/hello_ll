@@ -4,11 +4,11 @@
 #include "ring_buffer.h"
 
 #ifndef TX_BUF_SIZE
-#define TX_BUF_SIZE 32
+#define TX_BUF_SIZE 64
 #endif
 
 #ifndef RX_BUF_SIZE
-#define RX_BUF_SIZE 32
+#define RX_BUF_SIZE 64
 #endif
 
 typedef struct {

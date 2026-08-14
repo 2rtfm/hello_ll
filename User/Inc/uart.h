@@ -13,7 +13,8 @@ void UART_SendString(UART_Ctx *ctx, const char *str);
 void UART_SendHex(UART_Ctx *ctx, uint8_t hex);
 void UART_SendBin(UART_Ctx *ctx, uint8_t bin);
 
-__WEAK void UART_Handle_Recv(UART_Ctx *ctx);
+__WEAK void UART_Handle_Recv_IT(UART_Ctx *ctx);
+__WEAK void UART_Handle_Recv_DMA(UART_Ctx *ctx);
 void UART_SendByte_IT(UART_Ctx *ctx, uint8_t data);
 void UART_SendData_IT(UART_Ctx *ctx, const uint8_t *data, uint8_t size);
 void UART_SendString_IT(UART_Ctx *ctx, const char *str);

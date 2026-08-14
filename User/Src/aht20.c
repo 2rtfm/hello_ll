@@ -1,12 +1,16 @@
 #include "aht20.h"
+#include "i2c_hw.h"
 #include "i2c_ll.h"
 #include "stm32f103x6.h"
 #include "stm32f1xx_ll_utils.h"
 #include <stdint.h>
 
-void _aht20_vtoa(uint32_t val, char *str);
+static uint8_t aht20_mesure_cmd[] = {0xAC, 0x33, 0x00};
+static uint8_t aht20_buf[6];
 
-void aht20_init(void) {
+void _AHT20_vtoa(uint32_t val, char *str);
+
+void AHT20_Init(void) {
   uint8_t status;
   LL_mDelay(40);
   I2C_LL_MasterReceive(I2C1, AHT20_ADDR, &status, 1);
@@ -16,28 +20,52 @@ void aht20_init(void) {
   I2C_LL_MasterTransmit(I2C1, AHT20_ADDR, (uint8_t[]){0xBE, 0x08, 0x00}, 3);
 }
 
-void aht20_read(char *temp, char *hum) {
-  I2C_LL_MasterTransmit(I2C1, AHT20_ADDR, (uint8_t[]){0xAC, 0x33, 0x00}, 3);
+void AHT20_Read(char *temp, char *hum) {
+  I2C_LL_MasterTransmit(I2C1, AHT20_ADDR, aht20_mesure_cmd, 3);
   LL_mDelay(80);
-  uint8_t data[6];
-  I2C_LL_MasterReceive(I2C1, AHT20_ADDR, data, 6);
+  I2C_LL_MasterReceive(I2C1, AHT20_ADDR, aht20_buf, 6);
   uint32_t raw_data;
   uint32_t hum_data;
   int32_t temp_data;
-  raw_data = data[1] << 12 | data[2] << 4 | data[3] >> 4;
+  raw_data = aht20_buf[1] << 12 | aht20_buf[2] << 4 | aht20_buf[3] >> 4;
   hum_data = raw_data * 625 >> 16;
-  _aht20_vtoa(hum_data, hum);
-  raw_data = (data[3] & 0x0F) << 16 | data[4] << 8 | data[5];
+  _AHT20_vtoa(hum_data, hum);
+  raw_data = (aht20_buf[3] & 0x0F) << 16 | aht20_buf[4] << 8 | aht20_buf[5];
   temp_data = (int32_t)(raw_data * 625 >> 15) - 5000;
   if (temp_data < 0) {
-    _aht20_vtoa(-temp_data, temp);
+    _AHT20_vtoa(-temp_data, temp);
     *temp = '-';
   } else {
-    _aht20_vtoa(temp_data, temp);
+    _AHT20_vtoa(temp_data, temp);
   }
 }
 
-void _aht20_vtoa(uint32_t val, char *str) {
+void AHT20_Measure_IT() {
+  I2C_LL_MasterTransmit_IT(cI2C1, AHT20_ADDR, aht20_mesure_cmd, 3);
+}
+
+void AHT20_Recv_IT() {
+  I2C_LL_MasterReceive_IT(cI2C1, AHT20_ADDR, aht20_buf, 6);
+}
+
+void AHT20_Format_IT(char *temp, char *hum) {
+  uint32_t raw_data;
+  uint32_t hum_data;
+  int32_t temp_data;
+  raw_data = aht20_buf[1] << 12 | aht20_buf[2] << 4 | aht20_buf[3] >> 4;
+  hum_data = raw_data * 625 >> 16;
+  _AHT20_vtoa(hum_data, hum);
+  raw_data = (aht20_buf[3] & 0x0F) << 16 | aht20_buf[4] << 8 | aht20_buf[5];
+  temp_data = (int32_t)(raw_data * 625 >> 15) - 5000;
+  if (temp_data < 0) {
+    _AHT20_vtoa(-temp_data, temp);
+    *temp = '-';
+  } else {
+    _AHT20_vtoa(temp_data, temp);
+  }
+}
+
+void _AHT20_vtoa(uint32_t val, char *str) {
   char *p = str + 6;
   *p-- = '\0';
   do {

@@ -73,7 +73,8 @@ void UART_SendBin_IT(UART_Ctx *ctx, uint8_t bin) {
   } while (--i);
 }
 
-__WEAK void UART_Handle_Recv(UART_Ctx *ctx) {}
+__WEAK void UART_Handle_Recv_IT(UART_Ctx *ctx) {}
+__WEAK void UART_Handle_Recv_DMA(UART_Ctx *ctx) {}
 
 void UART_RecvData_IT(UART_Ctx *ctx, uint8_t size) {
   ctx->rx_it_left += size;
@@ -110,7 +111,7 @@ void UART_Handle_IT(UART_Ctx *ctx) {
       ring_buffer_push(ctx->rx_buf, LL_USART_ReceiveData8(ctx->uart));
       if (--ctx->rx_it_left == 0) {
         LL_USART_DisableIT_RXNE(ctx->uart);
-        UART_Handle_Recv(ctx);
+        UART_Handle_Recv_IT(ctx);
       }
     } else {
       LL_USART_DisableIT_RXNE(ctx->uart);
@@ -195,7 +196,7 @@ void UART_Handle_DMA_RX(UART_Ctx *ctx) {
     LL_USART_DisableDMAReq_RX(ctx->uart);
     LL_DMA_DisableChannel(ctx->rx_dma, ctx->rx_dma_channel);
     LL_DMA_DisableIT_TC(ctx->rx_dma, ctx->rx_dma_channel);
-    UART_Handle_Recv(ctx);
+    UART_Handle_Recv_DMA(ctx);
   }
 }
 
