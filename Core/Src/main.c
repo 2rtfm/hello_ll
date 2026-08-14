@@ -21,18 +21,16 @@
 #include "dma.h"
 #include "gpio.h"
 #include "i2c.h"
-#include "i2c_hw.h"
-#include "i2c_ll.h"
 #include "rtc.h"
 #include "spi.h"
-#include "stm32f1xx_ll_utils.h"
-#include "uart_hw.h"
+#include "tim.h"
 #include "usart.h"
 #include "usb.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "aht20.h"
+#include "i2c_ll.h"
 #include "keyled.h"
 #include "uart.h"
 #include <stdint.h>
@@ -99,26 +97,26 @@ void UART_Handle_Recv_IDLE(UART_Ctx *ctx, uint8_t size) {
   UART_RecvData_IDLE(ctx, recv_data, 50);
 }
 
-void I2C_LL_Error_Callback(I2C_Ctx *ctx, I2C_LL_Error error) {
-  if (error.I2C_LL_ERROR_BERR) {
+void I2C_Error_Callback(I2C_Ctx *ctx, I2C_LL_Error error) {
+  if (error.I2C_ERROR_BERR) {
     /* 总线错误复位后重新初始化 */
     MX_I2C1_Init();
     strcpy(msg, "Error: BERR\n");
   }
-  if (error.I2C_LL_ERROR_AF) {
+  if (error.I2C_ERROR_AF) {
     strcpy(msg, "Error: AF\n");
   }
-  if (error.I2C_LL_ERROR_ARLO) {
+  if (error.I2C_ERROR_ARLO) {
     strcpy(msg, "Error: ARLO\n");
   }
-  if (error.I2C_LL_ERROR_OVR) {
+  if (error.I2C_ERROR_OVR) {
     strcpy(msg, "Error: OVR\n");
   }
   UART_SendData_DMA(UART1, (uint8_t *)msg, strlen(msg));
-  ctx->status = I2C_LL_STATUS_IDLE;
+  ctx->status = I2C_STATUS_IDLE;
 }
 
-void I2C_LL_MasterTx_Callback(I2C_Ctx *ctx) {
+void I2C_MasterTx_Callback(I2C_Ctx *ctx) {
   if (ctx->addr == AHT20_ADDR) {
     if (aht20_status == AHT20_STATUS_SENDING_MESURE) {
       aht20_status = AHT20_STATUS_SENDING_COMPLETE;
@@ -126,7 +124,7 @@ void I2C_LL_MasterTx_Callback(I2C_Ctx *ctx) {
   }
 }
 
-void I2C_LL_MasterRx_Callback(I2C_Ctx *ctx) {
+void I2C_MasterRx_Callback(I2C_Ctx *ctx) {
   if (ctx->addr == AHT20_ADDR) {
     if (aht20_status == AHT20_STATUS_READING_MESURE) {
       aht20_status = AHT20_STATUS_READING_COMPLETE;
@@ -205,7 +203,7 @@ int main(void) {
       aht20_status = AHT20_STATUS_READING_MESURE;
     }
     if (aht20_status == AHT20_STATUS_READING_COMPLETE) {
-      AHT20_Format_IT(temp, hum);
+      AHT20_Format(temp, hum);
       aht20_status = AHT20_STATUS_IDLE;
       strcpy(msg, "\nTemp: ");
       strcat(msg, temp);

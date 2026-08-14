@@ -1,27 +1,27 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file    stm32f1xx_it.c
-  * @brief   Interrupt Service Routines.
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    stm32f1xx_it.c
+ * @brief   Interrupt Service Routines.
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2026 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
+#include "stm32f1xx_it.h"
 #include "i2c_hw.h"
 #include "i2c_ll.h"
 #include "main.h"
-#include "stm32f1xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "uart.h"
@@ -67,85 +67,74 @@
 /*           Cortex-M3 Processor Interruption and Exception Handlers          */
 /******************************************************************************/
 /**
-  * @brief This function handles Non maskable interrupt.
-  */
-void NMI_Handler(void)
-{
+ * @brief This function handles Non maskable interrupt.
+ */
+void NMI_Handler(void) {
   /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
 
   /* USER CODE END NonMaskableInt_IRQn 0 */
   /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
-   while (1)
-  {
+  while (1) {
   }
   /* USER CODE END NonMaskableInt_IRQn 1 */
 }
 
 /**
-  * @brief This function handles Hard fault interrupt.
-  */
-void HardFault_Handler(void)
-{
+ * @brief This function handles Hard fault interrupt.
+ */
+void HardFault_Handler(void) {
   /* USER CODE BEGIN HardFault_IRQn 0 */
 
   /* USER CODE END HardFault_IRQn 0 */
-  while (1)
-  {
+  while (1) {
     /* USER CODE BEGIN W1_HardFault_IRQn 0 */
     /* USER CODE END W1_HardFault_IRQn 0 */
   }
 }
 
 /**
-  * @brief This function handles Memory management fault.
-  */
-void MemManage_Handler(void)
-{
+ * @brief This function handles Memory management fault.
+ */
+void MemManage_Handler(void) {
   /* USER CODE BEGIN MemoryManagement_IRQn 0 */
 
   /* USER CODE END MemoryManagement_IRQn 0 */
-  while (1)
-  {
+  while (1) {
     /* USER CODE BEGIN W1_MemoryManagement_IRQn 0 */
     /* USER CODE END W1_MemoryManagement_IRQn 0 */
   }
 }
 
 /**
-  * @brief This function handles Prefetch fault, memory access fault.
-  */
-void BusFault_Handler(void)
-{
+ * @brief This function handles Prefetch fault, memory access fault.
+ */
+void BusFault_Handler(void) {
   /* USER CODE BEGIN BusFault_IRQn 0 */
 
   /* USER CODE END BusFault_IRQn 0 */
-  while (1)
-  {
+  while (1) {
     /* USER CODE BEGIN W1_BusFault_IRQn 0 */
     /* USER CODE END W1_BusFault_IRQn 0 */
   }
 }
 
 /**
-  * @brief This function handles Undefined instruction or illegal state.
-  */
-void UsageFault_Handler(void)
-{
+ * @brief This function handles Undefined instruction or illegal state.
+ */
+void UsageFault_Handler(void) {
   /* USER CODE BEGIN UsageFault_IRQn 0 */
 
   /* USER CODE END UsageFault_IRQn 0 */
-  while (1)
-  {
+  while (1) {
     /* USER CODE BEGIN W1_UsageFault_IRQn 0 */
     /* USER CODE END W1_UsageFault_IRQn 0 */
   }
 }
 
 /**
-  * @brief This function handles System service call via SWI instruction.
-  */
-void SVC_Handler(void)
-{
+ * @brief This function handles System service call via SWI instruction.
+ */
+void SVC_Handler(void) {
   /* USER CODE BEGIN SVCall_IRQn 0 */
 
   /* USER CODE END SVCall_IRQn 0 */
@@ -155,10 +144,9 @@ void SVC_Handler(void)
 }
 
 /**
-  * @brief This function handles Debug monitor.
-  */
-void DebugMon_Handler(void)
-{
+ * @brief This function handles Debug monitor.
+ */
+void DebugMon_Handler(void) {
   /* USER CODE BEGIN DebugMonitor_IRQn 0 */
 
   /* USER CODE END DebugMonitor_IRQn 0 */
@@ -168,10 +156,9 @@ void DebugMon_Handler(void)
 }
 
 /**
-  * @brief This function handles Pendable request for system service.
-  */
-void PendSV_Handler(void)
-{
+ * @brief This function handles Pendable request for system service.
+ */
+void PendSV_Handler(void) {
   /* USER CODE BEGIN PendSV_IRQn 0 */
 
   /* USER CODE END PendSV_IRQn 0 */
@@ -181,10 +168,9 @@ void PendSV_Handler(void)
 }
 
 /**
-  * @brief This function handles System tick timer.
-  */
-void SysTick_Handler(void)
-{
+ * @brief This function handles System tick timer.
+ */
+void SysTick_Handler(void) {
   /* USER CODE BEGIN SysTick_IRQn 0 */
 
   /* USER CODE END SysTick_IRQn 0 */
@@ -226,12 +212,11 @@ void DMA1_Channel5_IRQHandler(void) {
 }
 
 /**
-  * @brief This function handles DMA1 channel6 global interrupt.
-  */
-void DMA1_Channel6_IRQHandler(void)
-{
+ * @brief This function handles DMA1 channel6 global interrupt.
+ */
+void DMA1_Channel6_IRQHandler(void) {
   /* USER CODE BEGIN DMA1_Channel6_IRQn 0 */
-  
+  I2C_Handle_DMA_TX(cI2C1);
   /* USER CODE END DMA1_Channel6_IRQn 0 */
   /* USER CODE BEGIN DMA1_Channel6_IRQn 1 */
 
@@ -239,12 +224,11 @@ void DMA1_Channel6_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles DMA1 channel7 global interrupt.
-  */
-void DMA1_Channel7_IRQHandler(void)
-{
+ * @brief This function handles DMA1 channel7 global interrupt.
+ */
+void DMA1_Channel7_IRQHandler(void) {
   /* USER CODE BEGIN DMA1_Channel7_IRQn 0 */
-  
+  I2C_Handle_DMA_RX(cI2C1);
   /* USER CODE END DMA1_Channel7_IRQn 0 */
   /* USER CODE BEGIN DMA1_Channel7_IRQn 1 */
 
@@ -252,12 +236,11 @@ void DMA1_Channel7_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles I2C1 event interrupt.
-  */
-void I2C1_EV_IRQHandler(void)
-{
+ * @brief This function handles I2C1 event interrupt.
+ */
+void I2C1_EV_IRQHandler(void) {
   /* USER CODE BEGIN I2C1_EV_IRQn 0 */
-  I2C_LL_Handle_EV_IT(cI2C1);
+  I2C_Handle_EV_IT(cI2C1);
   /* USER CODE END I2C1_EV_IRQn 0 */
   /* USER CODE BEGIN I2C1_EV_IRQn 1 */
 
@@ -265,12 +248,11 @@ void I2C1_EV_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles I2C1 error interrupt.
-  */
-void I2C1_ER_IRQHandler(void)
-{
+ * @brief This function handles I2C1 error interrupt.
+ */
+void I2C1_ER_IRQHandler(void) {
   /* USER CODE BEGIN I2C1_ER_IRQn 0 */
-  I2C_LL_Handle_ER_IT(cI2C1);
+  I2C_Handle_ER_IT(cI2C1);
   /* USER CODE END I2C1_ER_IRQn 0 */
   /* USER CODE BEGIN I2C1_ER_IRQn 1 */
 
@@ -278,10 +260,9 @@ void I2C1_ER_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles USART1 global interrupt.
-  */
-void USART1_IRQHandler(void)
-{
+ * @brief This function handles USART1 global interrupt.
+ */
+void USART1_IRQHandler(void) {
   /* USER CODE BEGIN USART1_IRQn 0 */
   UART_Handle_IT(UART1);
   /* USER CODE END USART1_IRQn 0 */
@@ -291,10 +272,9 @@ void USART1_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles USART2 global interrupt.
-  */
-void USART2_IRQHandler(void)
-{
+ * @brief This function handles USART2 global interrupt.
+ */
+void USART2_IRQHandler(void) {
   /* USER CODE BEGIN USART2_IRQn 0 */
   UART_Handle_IT(UART2);
   /* USER CODE END USART2_IRQn 0 */

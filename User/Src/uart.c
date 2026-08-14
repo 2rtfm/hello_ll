@@ -3,6 +3,7 @@
 #include "stm32f103x6.h"
 #include "stm32f1xx_ll_dma.h"
 #include "stm32f1xx_ll_usart.h"
+#include "uart_hw.h"
 
 static const char hexTable[] = {'0', '1', '2', '3', '4', '5', '6', '7',
                                 '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
@@ -39,12 +40,14 @@ void UART_SendBin(UART_Ctx *ctx, uint8_t bin) {
 }
 
 void UART_SendByte_IT(UART_Ctx *ctx, uint8_t data) {
+  ctx->status = UART_STATUS_BUSY;
   ring_buffer_push(ctx->tx_buf, data);
   ctx->tx_it_left++;
   LL_USART_EnableIT_TXE(ctx->uart);
 }
 
 void UART_SendData_IT(UART_Ctx *ctx, const uint8_t *data, uint8_t size) {
+  ctx->status = UART_STATUS_BUSY;
   do {
     ring_buffer_push(ctx->tx_buf, *data++);
     ctx->tx_it_left++;
@@ -53,6 +56,7 @@ void UART_SendData_IT(UART_Ctx *ctx, const uint8_t *data, uint8_t size) {
 }
 
 void UART_SendString_IT(UART_Ctx *ctx, const char *str) {
+  ctx->status = UART_STATUS_BUSY;
   while (*str != '\0') {
     ring_buffer_push(ctx->tx_buf, *str++);
     ctx->tx_it_left++;
@@ -77,6 +81,7 @@ __WEAK void UART_Handle_Recv_IT(UART_Ctx *ctx) {}
 __WEAK void UART_Handle_Recv_DMA(UART_Ctx *ctx) {}
 
 void UART_RecvData_IT(UART_Ctx *ctx, uint8_t size) {
+  ctx->status = UART_STATUS_BUSY;
   ctx->rx_it_left += size;
   LL_USART_EnableIT_RXNE(ctx->uart);
 }
@@ -100,9 +105,11 @@ void UART_Handle_IT(UART_Ctx *ctx) {
       LL_USART_TransmitData8(ctx->uart, data);
       if (--ctx->tx_it_left == 0) {
         LL_USART_DisableIT_TXE(ctx->uart);
+        ctx->status = UART_STATUS_IDLE;
       }
     } else {
       LL_USART_DisableIT_TXE(ctx->uart);
+      ctx->status = UART_STATUS_IDLE;
     }
   }
   if (LL_USART_IsActiveFlag_RXNE(ctx->uart) &&
@@ -112,9 +119,11 @@ void UART_Handle_IT(UART_Ctx *ctx) {
       if (--ctx->rx_it_left == 0) {
         LL_USART_DisableIT_RXNE(ctx->uart);
         UART_Handle_Recv_IT(ctx);
+        ctx->status = UART_STATUS_IDLE;
       }
     } else {
       LL_USART_DisableIT_RXNE(ctx->uart);
+      ctx->status = UART_STATUS_IDLE;
     }
   }
   if (LL_USART_IsActiveFlag_IDLE(ctx->uart) &&
@@ -162,6 +171,9 @@ static void UART_DMA_ClearFlag_TC(DMA_TypeDef *dma, uint32_t channel) {
 }
 
 void UART_SendData_DMA(UART_Ctx *ctx, const uint8_t *data, uint8_t size) {
+  if (ctx->status != UART_STATUS_IDLE) {
+    return;
+  }
   LL_DMA_SetPeriphAddress(ctx->tx_dma, ctx->tx_dma_channel,
                           LL_USART_DMA_GetRegAddr(ctx->uart));
   LL_DMA_SetMemoryAddress(ctx->tx_dma, ctx->tx_dma_channel, (uint32_t)data);
@@ -169,6 +181,7 @@ void UART_SendData_DMA(UART_Ctx *ctx, const uint8_t *data, uint8_t size) {
   LL_DMA_EnableIT_TC(ctx->tx_dma, ctx->tx_dma_channel);
   LL_USART_EnableDMAReq_TX(ctx->uart);
   LL_DMA_EnableChannel(ctx->tx_dma, ctx->tx_dma_channel);
+  ctx->status = UART_STATUS_BUSY;
 }
 
 void UART_Handle_DMA_TX(UART_Ctx *ctx) {
@@ -177,10 +190,14 @@ void UART_Handle_DMA_TX(UART_Ctx *ctx) {
     LL_USART_DisableDMAReq_TX(ctx->uart);
     LL_DMA_DisableChannel(ctx->tx_dma, ctx->tx_dma_channel);
     LL_DMA_DisableIT_TC(ctx->tx_dma, ctx->tx_dma_channel);
+    ctx->status = UART_STATUS_IDLE;
   }
 }
 
 void UART_RecvData_DMA(UART_Ctx *ctx, uint8_t *data, uint8_t size) {
+  if (ctx->status != UART_STATUS_IDLE) {
+    return;
+  }
   LL_DMA_SetPeriphAddress(ctx->rx_dma, ctx->rx_dma_channel,
                           LL_USART_DMA_GetRegAddr(ctx->uart));
   LL_DMA_SetMemoryAddress(ctx->rx_dma, ctx->rx_dma_channel, (uint32_t)data);
@@ -188,6 +205,7 @@ void UART_RecvData_DMA(UART_Ctx *ctx, uint8_t *data, uint8_t size) {
   LL_DMA_EnableIT_TC(ctx->rx_dma, ctx->rx_dma_channel);
   LL_USART_EnableDMAReq_RX(ctx->uart);
   LL_DMA_EnableChannel(ctx->rx_dma, ctx->rx_dma_channel);
+  ctx->status = UART_STATUS_BUSY;
 }
 
 void UART_Handle_DMA_RX(UART_Ctx *ctx) {
@@ -197,6 +215,7 @@ void UART_Handle_DMA_RX(UART_Ctx *ctx) {
     LL_DMA_DisableChannel(ctx->rx_dma, ctx->rx_dma_channel);
     LL_DMA_DisableIT_TC(ctx->rx_dma, ctx->rx_dma_channel);
     UART_Handle_Recv_DMA(ctx);
+    ctx->status = UART_STATUS_IDLE;
   }
 }
 

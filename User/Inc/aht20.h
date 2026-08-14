@@ -1,6 +1,7 @@
 #ifndef __AHT20_H__
 #define __AHT20_H__
 
+#include <stdint.h>
 #define AHT20_ADDR 0x70
 
 typedef enum {
@@ -16,6 +17,7 @@ void AHT20_Read(char *temp, char *hum);
 
 void AHT20_Measure_IT();
 void AHT20_Recv_IT();
-void AHT20_Format_IT(char *temp, char *hum);
+void AHT20_Format(char *temp, char *hum);
+uint8_t *AHT20_RawData(void);
 
 #endif
