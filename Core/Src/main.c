@@ -23,6 +23,8 @@
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
+#include "stm32f103x6.h"
+#include "stm32f1xx_ll_tim.h"
 #include "tim.h"
 #include "usart.h"
 #include "usb.h"
@@ -33,6 +35,7 @@
 #include "i2c_ll.h"
 #include "keyled.h"
 #include "uart.h"
+#include "us_delay.h"
 #include <stdint.h>
 #include <string.h>
 /* USER CODE END Includes */
@@ -59,7 +62,7 @@ uint8_t recv_data[50];
 char hum[7];
 char temp[7];
 char msg[50];
-uint8_t read_flag;
+uint8_t input_flag;
 AHT20_Status aht20_status;
 /* USER CODE END PV */
 
@@ -75,9 +78,7 @@ void UART_Handle_Recv_IDLE(UART_Ctx *ctx, uint8_t size);
 void UART_Handle_Recv_IT(UART_Ctx *ctx) {
   LED_Toggle();
   UART_Transmit_RecvData_IT(ctx, recv_data, 1);
-  if (recv_data[0] == 'r') {
-    read_flag = 1;
-  }
+  input_flag = recv_data[0];
   UART_SendData_IT(ctx, recv_data, 1);
   UART_RecvData_IT(ctx, 1);
 };
@@ -90,9 +91,7 @@ void UART_Handle_Recv_DMA(UART_Ctx *ctx) {
 
 void UART_Handle_Recv_IDLE(UART_Ctx *ctx, uint8_t size) {
   LED_Toggle();
-  if (recv_data[0] == 'r') {
-    read_flag = 1;
-  }
+  input_flag = recv_data[0];
   UART_SendData_DMA(ctx, recv_data, size);
   UART_RecvData_IDLE(ctx, recv_data, 50);
 }
@@ -150,7 +149,7 @@ int main(void) {
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  DWT_Init();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -169,8 +168,14 @@ int main(void) {
   MX_USB_PCD_Init();
   MX_RTC_Init();
   MX_USART2_UART_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   AHT20_Init();
+  LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH1);
+  LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH2);
+  LL_TIM_EnableIT_CC1(TIM1);
+  LL_TIM_EnableIT_CC2(TIM1);
+  LL_TIM_EnableCounter(TIM1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -190,8 +195,8 @@ int main(void) {
     //     UART_SendData_IT(UART2, (uint8_t *)"On\n", 3);
     //   }
     // }
-    if (read_flag) {
-      read_flag = 0;
+    if (input_flag == 'r') {
+      input_flag = 0;
       if (aht20_status == AHT20_STATUS_IDLE) {
         AHT20_Measure_IT();
         aht20_status = AHT20_STATUS_SENDING_MESURE;
@@ -213,6 +218,19 @@ int main(void) {
       UART_SendData_DMA(UART1, (uint8_t *)msg, strlen(msg));
       UART_SendData_IT(UART2, (uint8_t *)msg, strlen(msg));
       LL_mDelay(20);
+    }
+    if (input_flag == 't') {
+      input_flag = 0;
+      UART_SendU32Bin(UART1, LL_TIM_GetCounter(TIM1));
+      UART_SendByte(UART1, '\n');
+    }
+    if (input_flag == 'e') {
+      LL_mDelay(10);
+      input_flag = 0;
+      LL_GPIO_SetOutputPin(TRIG_GPIO_Port, TRIG_Pin);
+      delay_us(50);
+      LL_GPIO_ResetOutputPin(TRIG_GPIO_Port, TRIG_Pin);
+      LL_TIM_SetCounter(TIM1, 0);
     }
     /* USER CODE END WHILE */
 

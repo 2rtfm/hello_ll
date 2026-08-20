@@ -40,6 +40,7 @@ extern "C" {
 #include "stm32f1xx_ll_pwr.h"
 #include "stm32f1xx_ll_rtc.h"
 #include "stm32f1xx_ll_spi.h"
+#include "stm32f1xx_ll_tim.h"
 #include "stm32f1xx_ll_usart.h"
 #include "stm32f1xx_ll_gpio.h"
 
@@ -75,6 +76,8 @@ void Error_Handler(void);
 #define LED_GPIO_Port GPIOC
 #define KEY_UP_Pin LL_GPIO_PIN_0
 #define KEY_UP_GPIO_Port GPIOA
+#define TRIG_Pin LL_GPIO_PIN_15
+#define TRIG_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

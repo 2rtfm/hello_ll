@@ -39,6 +39,31 @@ void UART_SendBin(UART_Ctx *ctx, uint8_t bin) {
   } while (--i);
 }
 
+void UART_SendU32Dec(UART_Ctx *ctx, uint32_t dec) {
+  char buf[11] = "          ";
+  uint8_t i = 9;
+  while (dec > 0) {
+    buf[i--] = '0' + dec % 10;
+    dec /= 10;
+  }
+  UART_SendString(ctx, buf);
+}
+
+void UART_SendU32Bin(UART_Ctx *ctx, uint32_t bin) {
+  uint8_t i = 3;
+  do {
+    UART_SendBin(ctx, bin >> (i << 3) & 0xFF);
+    UART_SendByte(ctx, ' ');
+  } while (i--);
+}
+
+void UART_SendU32Hex(UART_Ctx *ctx, uint32_t hex) {
+  uint8_t i = 3;
+  do {
+    UART_SendHex(ctx, hex >> (i << 3) & 0xFF);
+  } while (i--);
+}
+
 void UART_SendByte_IT(UART_Ctx *ctx, uint8_t data) {
   ctx->status = UART_STATUS_BUSY;
   ring_buffer_push(ctx->tx_buf, data);

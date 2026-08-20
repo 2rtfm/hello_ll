@@ -19,12 +19,12 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_it.h"
-#include "i2c_hw.h"
-#include "i2c_ll.h"
 #include "main.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "i2c_ll.h"
 #include "uart.h"
+#include "uart_hw.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -233,6 +233,37 @@ void DMA1_Channel7_IRQHandler(void) {
   /* USER CODE BEGIN DMA1_Channel7_IRQn 1 */
 
   /* USER CODE END DMA1_Channel7_IRQn 1 */
+}
+
+/**
+ * @brief This function handles TIM1 capture compare interrupt.
+ */
+void TIM1_CC_IRQHandler(void) {
+  /* USER CODE BEGIN TIM1_CC_IRQn 0 */
+  if (LL_TIM_IsActiveFlag_CC1(TIM1)) {
+    LL_TIM_ClearFlag_CC1(TIM1);
+    // UART_SendU32Bin(UART1, LL_TIM_GetCounter(TIM1));
+    // 处理上升沿捕获值
+  }
+
+  if (LL_TIM_IsActiveFlag_CC2(TIM1)) {
+    LL_TIM_ClearFlag_CC2(TIM1);
+    uint16_t rising = LL_TIM_IC_GetCaptureCH1(TIM1);
+    uint16_t falling = LL_TIM_IC_GetCaptureCH2(TIM1);
+    // UART_SendByte(UART1, 'D');
+    // UART_SendU32Hex(UART1, falling - rising);
+    UART_SendU32Dec(UART1, falling - rising);
+    UART_SendByte(UART1, '\n');
+    // UART_SendU32Bin(UART1, LL_TIM_GetCounter(TIM1));
+    // 处理下降沿捕获值
+    // 例如：period = falling - rising
+    //       duty   = falling - rising
+    // 注意 16 位溢出
+  }
+  /* USER CODE END TIM1_CC_IRQn 0 */
+  /* USER CODE BEGIN TIM1_CC_IRQn 1 */
+
+  /* USER CODE END TIM1_CC_IRQn 1 */
 }
 
 /**
