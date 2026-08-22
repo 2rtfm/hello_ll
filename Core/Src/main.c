@@ -169,6 +169,7 @@ int main(void) {
   MX_RTC_Init();
   MX_USART2_UART_Init();
   MX_TIM1_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   AHT20_Init();
   LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH1);
@@ -176,6 +177,8 @@ int main(void) {
   LL_TIM_EnableIT_CC1(TIM1);
   LL_TIM_EnableIT_CC2(TIM1);
   LL_TIM_EnableCounter(TIM1);
+  LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH1);
+  LL_TIM_EnableCounter(TIM3);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -196,7 +199,6 @@ int main(void) {
     //   }
     // }
     if (input_flag == 'r') {
-      input_flag = 0;
       if (aht20_status == AHT20_STATUS_IDLE) {
         AHT20_Measure_IT();
         aht20_status = AHT20_STATUS_SENDING_MESURE;
@@ -220,18 +222,23 @@ int main(void) {
       LL_mDelay(20);
     }
     if (input_flag == 't') {
-      input_flag = 0;
       UART_SendU32Bin(UART1, LL_TIM_GetCounter(TIM1));
       UART_SendByte(UART1, '\n');
     }
     if (input_flag == 'e') {
       LL_mDelay(10);
-      input_flag = 0;
       LL_GPIO_SetOutputPin(TRIG_GPIO_Port, TRIG_Pin);
       delay_us(50);
       LL_GPIO_ResetOutputPin(TRIG_GPIO_Port, TRIG_Pin);
       LL_TIM_SetCounter(TIM1, 0);
     }
+    if (input_flag == 'u') {
+      LL_TIM_OC_SetCompareCH1(TIM3, LL_TIM_OC_GetCompareCH1(TIM3) + 10);
+    }
+    if (input_flag == 'd') {
+      LL_TIM_OC_SetCompareCH1(TIM3, LL_TIM_OC_GetCompareCH1(TIM3) - 10);
+    }
+    input_flag = 0;
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

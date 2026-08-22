@@ -40,7 +40,7 @@ void UART_SendBin(UART_Ctx *ctx, uint8_t bin) {
 }
 
 void UART_SendU32Dec(UART_Ctx *ctx, uint32_t dec) {
-  char buf[11] = "          ";
+  char buf[11] = "         0";
   uint8_t i = 9;
   while (dec > 0) {
     buf[i--] = '0' + dec % 10;
