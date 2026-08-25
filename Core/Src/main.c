@@ -23,8 +23,6 @@
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
-#include "stm32f103x6.h"
-#include "stm32f1xx_ll_tim.h"
 #include "tim.h"
 #include "usart.h"
 #include "usb.h"
@@ -170,6 +168,7 @@ int main(void) {
   MX_USART2_UART_Init();
   MX_TIM1_Init();
   MX_TIM3_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   AHT20_Init();
   LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH1);
@@ -179,6 +178,8 @@ int main(void) {
   LL_TIM_EnableCounter(TIM1);
   LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH1);
   LL_TIM_EnableCounter(TIM3);
+  LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH1 | LL_TIM_CHANNEL_CH2);
+  LL_TIM_EnableCounter(TIM2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -239,6 +240,9 @@ int main(void) {
       LL_TIM_OC_SetCompareCH1(TIM3, LL_TIM_OC_GetCompareCH1(TIM3) - 10);
     }
     input_flag = 0;
+    UART_SendU32Dec(UART1, LL_TIM_GetCounter(TIM2));
+    UART_SendByte(UART1, '\n');
+    LL_mDelay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
